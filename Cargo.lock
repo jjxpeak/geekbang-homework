@@ -3,5 +3,17 @@
 version = 3
 
 [[package]]
-name = "template"
+name = "homework"
+version = "0.1.0"
+
+[[package]]
+name = "work01"
+version = "0.1.0"
+
+[[package]]
+name = "work02"
+version = "0.1.0"
+
+[[package]]
+name = "work03"
 version = "0.1.0"
