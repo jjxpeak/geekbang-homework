@@ -59,3 +59,8 @@ repos:
         language: rust
         files: \.rs$
         pass_filenames: false
+      - id: cargo-cliff
+        name: cargo cliff
+        description: create commit log
+        entry: bash -c 'git cliff -o CHANGELOG.md'
+        language: rust
