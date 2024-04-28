@@ -4,10 +4,8 @@ use std::{
     path::PathBuf,
 };
 
-use chacha20poly1305::{
-    aead::{generic_array::GenericArray, Aead, OsRng},
-    AeadCore, ChaCha20Poly1305, KeyInit,
-};
+use aead_io::{ArrayBuffer, DecryptBE32BufReader, EncryptBE32BufWriter};
+use chacha20poly1305::{aead::OsRng, ChaCha20Poly1305, KeyInit};
 
 use crate::{
     utils::{base64_decode, base64_encode, get_reader, reader_content, reader_content_str},
@@ -20,39 +18,41 @@ impl Actuator for TextOpts {
             TextAction::Encrypt(opt) => {
                 let content = read_content(opt.content)?;
                 let mut key = get_reader(&opt.key)?;
+                let key = reader_content(&mut key)?;
+                let mut ciphertext = Vec::default();
+                {
+                    let mut writer = EncryptBE32BufWriter::<ChaCha20Poly1305, _, _>::new(
+                        key.as_slice().into(),
+                        &Default::default(), // please use a better nonce ;)
+                        ArrayBuffer::<128>::new(),
+                        &mut ciphertext,
+                    )?;
 
-                // 自定义Key的使用chacha20poly1305对text进行加密
-                let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(
-                    reader_content(&mut key)?.as_slice(),
-                ));
-
-                let nonce = ChaCha20Poly1305::generate_nonce(OsRng);
-                match cipher.encrypt(&nonce, content.as_ref()) {
-                    Ok(c) => {
-                        output_text(c, opt.output, opt.format)?;
-                        Ok(())
-                    }
-                    Err(e) => Err(anyhow::Error::msg(e.to_string())),
+                    writer.write_all(content.as_bytes())?;
+                    writer.flush()?;
                 }
+                output_result(ciphertext, opt.output, opt.out_format)?;
+                Ok(())
             }
             TextAction::Decrypt(opt) => {
                 let content = read_content(opt.content)?;
 
-                let content = base64_decode(&opt.format, content.as_bytes())?;
-
+                let content = base64_decode(&opt.in_format, content.as_bytes())?;
                 let mut key = get_reader(&opt.key)?;
                 let key = reader_content(&mut key)?;
-                let key = GenericArray::clone_from_slice(key.as_slice());
-                // 自定义Key的使用chacha20poly1305对text进行加密
-                let cipher = ChaCha20Poly1305::new(&key);
-                let nonce: GenericArray<u8, _> = ChaCha20Poly1305::generate_nonce(OsRng);
-                match cipher.decrypt(&nonce, content.as_ref()) {
-                    Ok(c) => {
-                        output_text(c, opt.output, opt.format)?;
-                        Ok(())
-                    }
-                    Err(e) => Err(anyhow::Error::msg(e.to_string())),
-                }
+
+                let mut decrypted = Vec::new();
+                {
+                    let mut reader = DecryptBE32BufReader::<ChaCha20Poly1305, _, _>::new(
+                        key.as_slice().into(),
+                        ArrayBuffer::<256>::new(),
+                        content.as_slice(),
+                    )?;
+                    let _ = reader.read_to_end(&mut decrypted)?;
+                };
+
+                output_result(decrypted, opt.output, opt.out_format)?;
+                Ok(())
             }
             TextAction::GenerateKey(opt) => {
                 let key = ChaCha20Poly1305::generate_key(OsRng);
@@ -62,7 +62,6 @@ impl Actuator for TextOpts {
                     .write(true)
                     .open(opt.key)?;
                 f.write_all(key.as_slice())?;
-                println!("key: {:?}", key);
                 f.flush()?;
                 Ok(())
             }
@@ -85,13 +84,12 @@ fn read_content(content: Option<String>) -> anyhow::Result<String, anyhow::Error
     }
 }
 
-fn output_text(
+fn output_result(
     content: Vec<u8>,
     path: Option<PathBuf>,
     format: Base64Charset,
 ) -> anyhow::Result<()> {
     let content = base64_encode(&format, &content)?;
-    println!("{}", content);
     match path {
         Some(path) => fs::write(path, content)?,
         None => println!("{}", content),
@@ -102,6 +100,7 @@ fn output_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aead_io::{ArrayBuffer, DecryptBE32BufReader, EncryptBE32BufWriter};
 
     #[test]
     fn text_read_content_some() {
@@ -118,16 +117,38 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "test"]
-    fn text_decrypt_encrypt() {
-        let path: String = String::from("fixtures/key.pem");
-        let mut key = get_reader(&path).unwrap();
-        let key = reader_content(&mut key).unwrap();
-        let key = GenericArray::clone_from_slice(key.as_slice());
-        let cipher = ChaCha20Poly1305::new(&key);
-        let nonce = ChaCha20Poly1305::generate_nonce(OsRng); // 96-bits; unique per message
-        let ciphertext = cipher.encrypt(&nonce, b"helloworld".as_ref()).unwrap();
-        let plaintext = cipher.decrypt(&nonce, ciphertext.as_ref()).unwrap();
-        assert_eq!(&plaintext, b"helloworld");
+    fn text_decrypt_encrypt() -> anyhow::Result<()> {
+        let key = b"my very super super secret key!!".into();
+        println!("key: {:?}", "my very super super secret key!!".len());
+        let plaintext = b"hello world!";
+
+        let mut ciphertext = Vec::default();
+        {
+            let mut writer = EncryptBE32BufWriter::<ChaCha20Poly1305, _, _>::new(
+                key,
+                &Default::default(), // please use a better nonce ;)
+                ArrayBuffer::<128>::new(),
+                &mut ciphertext,
+            )
+            .unwrap();
+            writer.write_all(plaintext)?;
+            writer.flush()?;
+        };
+
+        let mut decrypted = Vec::new();
+        {
+            let mut reader = DecryptBE32BufReader::<ChaCha20Poly1305, _, _>::new(
+                key,
+                ArrayBuffer::<256>::new(),
+                ciphertext.as_slice(),
+            )
+            .unwrap();
+            let _ = reader.read_to_end(&mut decrypted).unwrap();
+        };
+        println!("decrypted: {:?}", decrypted);
+        println!("plaintext: {:?}", plaintext);
+        println!("ciphertext: {:?}", ciphertext);
+        assert_eq!(decrypted, plaintext);
+        Ok(())
     }
 }

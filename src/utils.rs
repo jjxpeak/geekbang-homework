@@ -15,6 +15,7 @@ pub fn base64_encode(charset: &Base64Charset, content: &[u8]) -> Result<String> 
         Base64Charset::StandardNoPad => Ok(BASE64_STANDARD_NO_PAD.encode(content)),
         Base64Charset::UrlSaff => Ok(BASE64_URL_SAFE.encode(content)),
         Base64Charset::UrlSafeNoPad => Ok(BASE64_URL_SAFE_NO_PAD.encode(content)),
+        Base64Charset::None => Ok(String::from_utf8(content.to_vec())?),
     }
 }
 
@@ -24,6 +25,7 @@ pub fn base64_decode(charset: &Base64Charset, content: &[u8]) -> Result<Vec<u8>>
         Base64Charset::StandardNoPad => Ok(BASE64_STANDARD_NO_PAD.decode(content)?),
         Base64Charset::UrlSaff => Ok(BASE64_URL_SAFE.decode(content)?),
         Base64Charset::UrlSafeNoPad => Ok(BASE64_URL_SAFE_NO_PAD.decode(content)?),
+        Base64Charset::None => Ok(content.to_vec()),
     }
 }
 

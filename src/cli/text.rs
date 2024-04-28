@@ -25,9 +25,16 @@ pub struct SubCommandOpt {
     #[arg(
         long,
         default_value = "standard-nopad",
-        help = "Base64 Encode Charsets values [standard,standard-nopad,urlsafe,urlsafe-nopad]"
+        help = "input text base64 encode format Base64 Encode Charsets values [standard,standard-nopad,urlsafe,urlsafe-nopad,none], the none is not base64 encoded"
     )]
-    pub format: Base64Charset,
+    pub in_format: Base64Charset,
+
+    #[arg(
+        long,
+        default_value = "none",
+        help = "output text base64 encode format  charsets values [standard,standard-nopad,urlsafe,urlsafe-nopad,none],the none is not base64 encoded"
+    )]
+    pub out_format: Base64Charset,
 
     #[arg(
         long,

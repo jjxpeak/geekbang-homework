@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 
 mod ftp;
 mod jwt;
@@ -23,12 +23,4 @@ pub enum Commands {
     Jwt(JwtOpts),
     #[command(name = "ftp")]
     Ftp(FtpOpts),
-}
-
-#[derive(Debug, Clone, ValueEnum)]
-pub enum Base64Charset {
-    Standard,
-    StandardNoPad,
-    UrlSaff,
-    UrlSafeNoPad,
 }

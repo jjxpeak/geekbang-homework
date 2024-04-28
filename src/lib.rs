@@ -16,6 +16,7 @@ pub enum Base64Charset {
     StandardNoPad,
     UrlSaff,
     UrlSafeNoPad,
+    None,
 }
 
 impl FromStr for Base64Charset {
@@ -26,7 +27,8 @@ impl FromStr for Base64Charset {
             "standard-nopad" => Ok(Base64Charset::StandardNoPad),
             "urlsafe" => Ok(Base64Charset::UrlSaff),
             "urlsafe-nopad" => Ok(Base64Charset::UrlSafeNoPad),
-            _ => anyhow::bail!("unknown base64 charset: {}", s),
+            "none" => Ok(Base64Charset::None),
+            _ => Err(anyhow::anyhow!("Invalid base64 charset: {}", s)),
         }
     }
 }
@@ -38,6 +40,7 @@ impl From<Base64Charset> for &str {
             Base64Charset::StandardNoPad => "standard-nopad",
             Base64Charset::UrlSaff => "urlsafe",
             Base64Charset::UrlSafeNoPad => "urlsafe-nopad",
+            Base64Charset::None => "none",
         }
     }
 }
