@@ -1,0 +1,16 @@
+a:
+  b: 123
+  c: "abc"
+  d:
+    - 123
+    - 456
+    - 789
+  e:
+    - 123
+    - 456
+    - 789
+  f: null
+  g: true
+  h: false
+
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.1.0.schema.json

@@ -19,6 +19,38 @@ pub enum Base64Charset {
     None,
 }
 
+#[derive(Debug, Clone)]
+pub enum DataFormat {
+    Json,
+    Yaml,
+    Toml,
+    Text,
+}
+
+impl FromStr for DataFormat {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_lowercase().as_str() {
+            "json" => Ok(DataFormat::Json),
+            "yaml" => Ok(DataFormat::Yaml),
+            "toml" => Ok(DataFormat::Toml),
+            "text" => Ok(DataFormat::Text),
+            _ => Err(anyhow::anyhow!("Invalid data format: {}", s)),
+        }
+    }
+}
+
+impl From<DataFormat> for &str {
+    fn from(df: DataFormat) -> Self {
+        match df {
+            DataFormat::Json => "json",
+            DataFormat::Yaml => "yaml",
+            DataFormat::Toml => "toml",
+            DataFormat::Text => "text",
+        }
+    }
+}
+
 impl FromStr for Base64Charset {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {

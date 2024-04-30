@@ -145,9 +145,6 @@ mod tests {
             .unwrap();
             let _ = reader.read_to_end(&mut decrypted).unwrap();
         };
-        println!("decrypted: {:?}", decrypted);
-        println!("plaintext: {:?}", plaintext);
-        println!("ciphertext: {:?}", ciphertext);
         assert_eq!(decrypted, plaintext);
         Ok(())
     }
