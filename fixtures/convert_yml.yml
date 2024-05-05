@@ -12,5 +12,3 @@ a:
   f: null
   g: true
   h: false
-
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.1.0.schema.json

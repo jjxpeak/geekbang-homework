@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 aead-io = "0.2.0"
 anyhow = "1.0.82"
+axum = { version = "0.7.5", features = ["http2", "query", "tracing"] }
 base64 = "0.22.0"
 chacha20poly1305 = { version = "0.10.1", features = ["getrandom"] }
 chrono = "0.4.38"
@@ -21,4 +22,8 @@ serde_json = "1.0.116"
 serde_yaml = "0.9.34"
 sha2 = "0.10.8"
 stringreader = "0.1.1"
+tokio = { version = "1.37.0", features = ["rt", "rt-multi-thread", "macros", "net", "fs"] }
 toml = "0.8.12"
+tower-http = { version = "0.5.2", features = ["compression-full", "cors", "trace", "fs"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
